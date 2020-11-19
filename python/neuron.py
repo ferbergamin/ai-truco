@@ -7,7 +7,7 @@ class Neuron:
 
     def sum_func(self):
         sum = 0
-        for i in range(self.entries):
+        for i in range(len(self.entries)):
             sum += self.entries[i]*self.weights[i]
         
         return sum

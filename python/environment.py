@@ -67,13 +67,13 @@ class Environment:
             for nipe in self.nipes:
                 if card[0] in [i[0] for i in self.manilas]:
                     if nipe == 'g':
-                        peso = 1.1
+                        peso = 0.5
                     elif nipe == 's':
-                        peso = 1.2
+                        peso = 0.6
                     elif nipe == 'h':
-                        peso = 1.3
+                        peso = 0.7
                     elif nipe == 'z':
-                        peso = 1.4
+                        peso = 0.8
                 deck.append((card[0], nipe, peso))
 
         # Select a card position in the deck to give it to the player
@@ -96,26 +96,23 @@ class Environment:
         while not round_over:
             context_player_initiator = self.initiator_player.play(self.round_truco, True, self.finisher_player.last_card_played, hand)
 
-            round_context = self.define_player_play(self.initiator_player, context_player_initiator, self.finisher_player)
-            
-            print("round context",round_context)
+            round_context = self.define_player_play(self.initiator_player, context_player_initiator, self.finisher_player, hand)
 
             round_over = round_context == True
             if round_over: break
 
             if not round_over:
-                context_player_finisher = self.finisher_player.play(self.round_truco, True, self.initiator_player.last_card_played, )
+                context_player_finisher = self.finisher_player.play(self.round_truco, True, self.initiator_player.last_card_played, hand)
 
                 round_context = self.define_player_play(self.finisher_player, context_player_finisher, self.initiator_player, hand)
                 round_over = round_context == True
                 if round_over: break
             
-            print("round context",round_context)
             if round_context != 't':
                 round_over = self.define_hand_winner()
                 hand += 1
 
-    def define_player_play(self, player: Player, context, opponent: Player):
+    def define_player_play(self, player: Player, context, opponent: Player, hand):
         if context[0] == 't':
             print(player.name + " trucou!")
             self.round_truco = True
@@ -143,7 +140,7 @@ class Environment:
         else:
             print(player.name + " jogou " + player.last_card_played[0])
             if self.initiator_player.last_card_played == None:
-                return self.define_player_play(self.initiator_player, self.initiator_player.play(self.round_truco), self.finisher_player)
+                return self.define_player_play(self.initiator_player, self.initiator_player.play(self.round_truco, True, self.finisher_player.last_card_played, hand), self.finisher_player)
    
     def define_hand_winner(self):
         weight_player_initiator = self.initiator_player.last_card_played[2]
