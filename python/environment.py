@@ -92,8 +92,9 @@ class Environment:
     ### Round Play
     def play_round(self):
         round_over = False
+        hand = 1
         while not round_over:
-            context_player_initiator = self.initiator_player.play(self.round_truco)
+            context_player_initiator = self.initiator_player.play(self.round_truco, True, self.finisher_player.last_card_played, hand)
 
             round_context = self.define_player_play(self.initiator_player, context_player_initiator, self.finisher_player)
             
@@ -103,16 +104,16 @@ class Environment:
             if round_over: break
 
             if not round_over:
-                context_player_finisher = self.finisher_player.play(self.round_truco)
+                context_player_finisher = self.finisher_player.play(self.round_truco, True, self.initiator_player.last_card_played, )
 
-                round_context = self.define_player_play(self.finisher_player, context_player_finisher, self.initiator_player)
+                round_context = self.define_player_play(self.finisher_player, context_player_finisher, self.initiator_player, hand)
                 round_over = round_context == True
                 if round_over: break
             
             print("round context",round_context)
             if round_context != 't':
                 round_over = self.define_hand_winner()
-        
+                hand += 1
 
     def define_player_play(self, player: Player, context, opponent: Player):
         if context[0] == 't':

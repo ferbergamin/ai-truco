@@ -1,3 +1,5 @@
+from neuron import Neuron
+
 class Player:
     def __init__(self, isIA, name):
         self.points = 0
@@ -14,22 +16,22 @@ class Player:
     # Sensores
     def receive_cards(self, card):
         self.cards_in_hand.append(card)
+        if self.isIA:
+            self.playerIA.cards_in_hand = self.cards_in_hand
 
     # Atuadores
-    def play(self, trucado, can_trucar = True, card_opponent = None):
+    def play(self, trucado, can_trucar = True, card_opponent = None, hand = 1):
         self.can_trucar = can_trucar
 
         if trucado:
-            if self.isIA:
-                self.accept_trucada = self.playerIA.decide_trucada
-            return self.accept_trucada()
+            return self.accept_trucada(hand)
         
         card_choice = None
         if self.isIA:
             if(card_opponent):
                 self.playerIA.set_opponent_cards_played(card_opponent)
     
-            card_choice = self.playerIA.play(self.cards_in_hand)
+            card_choice = self.playerIA.play(hand, card_opponent[2])
 
         else:
             valid_choice = False
@@ -62,9 +64,9 @@ class Player:
     def trucar(self):
         return ('t', '')
 
-    def accept_trucada(self):
+    def accept_trucada(self, hand = None):
         if self.isIA:
-            return self.playerIA.decide_trucada()
+            return self.playerIA.decide_trucada(hand)
         else:
             print('Suas cartas: ')
             self.see_cards()
@@ -100,16 +102,44 @@ class PlayerIA:
         self.memory = memory
 
     # Atuadores
-    def play(self, cards_in_hand):
-        self.cards_in_hand = cards_in_hand
+    def play(self, hand, opponent_card_weigth):
 
-        return 
+        cards_in_hand_weight = sum(k[2] for k in self.cards_in_hand)
+
+        have_major_card = False
+        for card in self.cards_in_hand:
+            if card[2] >= opponent_card_weigth:
+                have_major_card = True
+        if not have_major_card:
+            return cards_in_hand_weight.index(min(cards_in_hand_weight))
+
+        entries_trucar = [self.who_made_first, self.opponent_cards_played, cards_in_hand_weight, hand]
+       
+        trucar_neuron = Neuron(entries_trucar, self.consult_memory(entries_trucar, 'trucar')).decider_step_func()
+        if trucar_neuron():
+            return self.trucar()
+
+        k = 0
+        for card_in_hand in self.cards_in_hand:
+            entries_choice = [self.who_made_first, self.opponent_cards_played, card_in_hand[2], hand]
+            choice_neuron = Neuron(entries_choice, self.consult_memory(entries_choice, 'choice')).decider_step_func()
+            if choice_neuron():
+                return k
+            k+=1
+
+        return 0
 
     def trucar(self):
         return 9
 
-    def decide_trucada(self):
-        return ('r', 1)
+    def decide_trucada(self, hand):
+        cards_in_hand_weight = sum(k[2] for k in self.cards_in_hand)
+        entries_trucada = [self.who_made_first, self.opponent_cards_played, cards_in_hand_weight, hand]
+        decide_trucada_neuron = Neuron(entries_trucada, self.consult_memory(entries_trucada, 'decide_trucada')).decider_step_func()
+        if (decide_trucada_neuron):
+            return ('r', 1)
+        else:
+            return ('r', 2)
 
     # Sensores
     def set_who_made_first(self):
@@ -122,13 +152,20 @@ class PlayerIA:
         pass
 
     def memory_positive_or_negative(self, memory):
-        return True
+        if memory['result'] == 'win':
+            return 1
+        return 0
 
     # Desempenho
     def increment_memory(self, context):
         self.memory.append(context)
 
-    def consult_memory(self, what):
+    def consult_memory(self, entries, what):
+        value = 0
+        memory_size = 0
         for k in self.memory:
-            if what in k:
-                return self.memory_positive_or_negative(k)
+            if k['action'] == what:
+                value += int(self.memory_positive_or_negative(k))
+                memory_size += 1
+
+        return [value/memory_size]*len(entries)

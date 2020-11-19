@@ -1,0 +1,7 @@
+action, who_m_f, cards_in_hand_weight, cards_op, scoreboard, hand, result
+trucar, 0.1, 0.5, 0.2, 0.2, 1, win
+choice, 0.1, 0.5, 0.2, 0.2, 1, win
+decide_trucada, 0.1, 0.5, 0.2, 0.2, 1, win
+trucar, 0.1, 0.5, 0.2, 0.2, 1, lose
+choice, 0.1, 0.5, 0.2, 0.2, 1, lose
+decide_trucada, 0.1, 0.5, 0.2, 0.2, 1, lose
