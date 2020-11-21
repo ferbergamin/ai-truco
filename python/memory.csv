@@ -1,7 +1,16 @@
-action, who_m_f, cards_in_hand_weight, cards_op, scoreboard, hand, result
-trucar, 0.1, 0.5, 0.2, 0.2, 1, win
-choice, 0.1, 0.5, 0.2, 0.2, 1, win
-decide_trucada, 0.1, 0.5, 0.2, 0.2, 1, win
-trucar, 0.1, 0.5, 0.2, 0.2, 1, lose
-choice, 0.1, 0.5, 0.2, 0.2, 1, lose
-decide_trucada, 0.1, 0.5, 0.2, 0.2, 1, lose
+who_m_f,card_table,cards_in_hand_mean_weight,hand,result
+0,0.3,0.2,1,1
+0,0,0.2,1,2
+0,0.2,0.2,1,3
+0,0.3,0,1,4
+0,0,0.2,1,5
+-1,0.3,0,2,1
+1,0,0.2,2,2
+1,0.1,0.2,2,3
+-1,0.2,0,2,4
+1,0.1,0.3,2,5
+-1,0,0,3,1
+1,0,0.1,3,2
+1,0.1,0,3,3
+-1,0.2,0,3,4
+1,0,0.3,3,5

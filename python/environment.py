@@ -67,13 +67,13 @@ class Environment:
             for nipe in self.nipes:
                 if card[0] in [i[0] for i in self.manilas]:
                     if nipe == 'g':
-                        peso = 0.5
+                        peso = 0.4
                     elif nipe == 's':
-                        peso = 0.6
+                        peso = 0.5
                     elif nipe == 'h':
-                        peso = 0.7
+                        peso = 0.6
                     elif nipe == 'z':
-                        peso = 0.8
+                        peso = 0.7
                 deck.append((card[0], nipe, peso))
 
         # Select a card position in the deck to give it to the player
@@ -138,7 +138,7 @@ class Environment:
                 print(player.name + " aumentou a trucada!")
                 return 't'
         else:
-            print(player.name + " jogou " + player.last_card_played[0])
+            print("{} jogou {} de {}".format(player.name , player.last_card_played[0], player.card_name(player.last_card_played[1])))
             if self.initiator_player.last_card_played == None:
                 return self.define_player_play(self.initiator_player, self.initiator_player.play(self.round_truco, True, self.finisher_player.last_card_played, hand), self.finisher_player)
    
