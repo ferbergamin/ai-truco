@@ -1,3 +1,4 @@
+from numpy.lib.utils import who
 from neuron import Neuron
 
 class Player:
@@ -51,8 +52,11 @@ class Player:
                 self.see_cards()
                 if can_trucar:
                     print("9 - trucar")
-                card_choice = int(input())
-                valid_choice = card_choice in valid_choices
+                card_choice = input()
+                print(card_choice)
+                if card_choice != '':
+                    card_choice = int(card_choice)
+                    valid_choice = card_choice in valid_choices
                 if not valid_choice:
                     print('Por favor, escolha um entrada válida')
 
@@ -68,6 +72,7 @@ class Player:
         self.last_card_played = card
 
     def trucar(self):
+        self.set_can_trucar(False)
         return ('t', '')
 
     def accept_trucada(self, hand = None):
@@ -110,7 +115,7 @@ class PlayerIA:
 
     # Atuadores
     def play(self, hand, opponent_card_weigth, who_made_first):
-
+        self.who_made_first = who_made_first
         cards_in_hand_weights = [k[2] for k in self.cards_in_hand]
         cards_in_hand_mean = sum(cards_in_hand_weights)/len(cards_in_hand_weights)
 
@@ -125,42 +130,40 @@ class PlayerIA:
         if not have_major_card:
             return cards_in_hand_weights.index(min(cards_in_hand_weights))
 
-        if neuron_value >= 0.3 and neuron_value < 0.5 :
-            if self.can_trucar():
+        if round(neuron_value) == 1:
+            if self.can_trucar:
                 return self.trucar()
 
         k = 0
 
-        # for card_in_hand in self.cards_in_hand:
-        #     entries_choice = [self.who_made_first, -self.cards_weight(self.opponent_cards_played), card_in_hand[2], hand]
-        #     choice_neuron = Neuron(entries_choice, self.consult_memory(entries_choice, 'choice')).decider_step_func()
-        #     if choice_neuron:
-        #         return k
-        #     k+=1
-
+        for card_in_hand in self.cards_in_hand:
+            entries_choice = [[who_made_first, self.cards_weight(self.opponent_cards_played), card_in_hand[2], hand]]
+            choice_neuron = Neuron(entries_choice).exec()
+            if round(choice_neuron) == 1:
+                return k
+            k+=1
         return 0
 
     def trucar(self):
+        self.set_can_trucar(False)
         return 9
 
     def decide_trucada(self, hand):
         cards_in_hand_weight = self.cards_weight(self.cards_in_hand)
-        entries_trucada = [self.who_made_first,  -self.cards_weight(self.opponent_cards_played), cards_in_hand_weight, hand]
-        decide_trucada_neuron = Neuron(entries_trucada, self.consult_memory(entries_trucada, 'decide_trucada')).decider_step_func()
-        if decide_trucada_neuron:
+        cards_in_hand_mean = cards_in_hand_weight/len(self.cards_in_hand)
+        entries_choice = [[self.who_made_first, self.cards_weight(self.opponent_cards_played), cards_in_hand_mean, hand]]
+        choice_neuron = Neuron(entries_choice).exec()
+        if round(choice_neuron) == 1:
             return ('r', 1)
         else:
             return ('r', 2)
 
     # Sensores
-    def set_who_made_first(self):
-        pass
-
     def set_opponent_cards_played(self, card):
         self.opponent_cards_played.append(card)
 
-    def cards_in_hand_weight(self):
-        pass
+    def clear_opponent_cards_played(self):
+        self.opponent_cards_played = []
 
     def memory_positive_or_negative(self, memory):
         if memory['result'] == 'win':
@@ -169,33 +172,6 @@ class PlayerIA:
 
     def set_can_trucar(self, can_trucar):
         self.can_trucar = can_trucar
-
-    # Desempenho
-    def increment_memory(self, context):
-        self.memory.append(context)
-
-    def consult_memory(self, entries, what):
-        value = 0.05
-        memory_size = 0.1
-
-        ############################################################
-
-        if len(self.memory) > 0:
-            value = 0
-            memory_size = 0
-
-        for k in self.memory:
-            if k['action'] == what:
-                value += int(self.memory_positive_or_negative(k))
-                memory_size += 1
-
-        ############################################################
-
-        memory_values = []
-        base = [value/memory_size]*len(entries)
-        for b, e in zip(base, entries):
-            memory_values.append((b*e)/0.1)
-        return memory_values
 
     # Helpers
     def cards_weight(self, cards):

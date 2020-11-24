@@ -1,5 +1,7 @@
 from player import Player
 from numpy.random import choice
+import os
+import time
 
 class Environment:
     def __init__(self, cards: list, Player1: Player, Player2: Player):
@@ -30,15 +32,26 @@ class Environment:
 
     ### Round begin
     def round_builder(self):
+        self.p1.set_can_trucar(True)
+        self.p2.set_can_trucar(True)
+        self.p1.playerIA.clear_opponent_cards_played()
+        self.p2.playerIA.clear_opponent_cards_played()
         self.get_random_card_fall()
         manila = self.find_manila(self.card_fall)
         self.set_manilas(manila)
         self.give_cards()
         self.current_hand += 1
+        print("================================================================")
         print('Três cartas é jogo marreco!')
-        print('O tombo é '+self.card_fall+ ' e a manilha é '+self.manilas[0][0])
+        print("================================================================")
+
         self.play_round()
+        time.sleep(2)
+        os.system("cls")
+        print("================================================================")
         print("Pontuação: \n{} {} \n{} {}".format(self.p1.name, self.p1.points, self.p2.name, self.p2.points))
+        print("================================================================")
+
         self.hand_win_history = []
         self.manilas = []
         self.p1.cards_in_hand = []
@@ -74,7 +87,9 @@ class Environment:
                         peso = 0.6
                     elif nipe == 'z':
                         peso = 0.7
-                deck.append((card[0], nipe, peso))
+                    deck.append((card[0], nipe, peso))
+                else:
+                    deck.append((card[0], nipe, peso))
 
         # Select a card position in the deck to give it to the player
         for card_gived in range(6):
@@ -94,7 +109,14 @@ class Environment:
         round_over = False
         hand = 1
         while not round_over:
-            context_player_initiator = self.initiator_player.play(self.round_truco, True, self.finisher_player.last_card_played, hand)
+            print("================================================================")
+            print('O tombo é '+self.card_fall+ ' e a manilha é '+self.manilas[0][0])
+            print("================================================================")
+
+            if len(self.hand_win_history) == 1:
+                print(self.hand_win_history[0].name+ " fez a primeira")
+
+            context_player_initiator = self.initiator_player.play(self.round_truco, True, self.finisher_player.last_card_played, hand, self.get_who_made_first_value(self.initiator_player))
 
             round_context = self.define_player_play(self.initiator_player, context_player_initiator, self.finisher_player, hand)
 
@@ -102,7 +124,7 @@ class Environment:
             if round_over: break
 
             if not round_over:
-                context_player_finisher = self.finisher_player.play(self.round_truco, True, self.initiator_player.last_card_played, hand)
+                context_player_finisher = self.finisher_player.play(self.round_truco, True, self.initiator_player.last_card_played, hand, self.get_who_made_first_value(self.finisher_player))
 
                 round_context = self.define_player_play(self.finisher_player, context_player_finisher, self.initiator_player, hand)
                 round_over = round_context == True
@@ -111,21 +133,25 @@ class Environment:
             if round_context != 't':
                 round_over = self.define_hand_winner()
                 hand += 1
+            time.sleep(3)
+            os.system("cls")
+
 
     def define_player_play(self, player: Player, context, opponent: Player, hand):
         if context[0] == 't':
-            print(player.name + " trucou!")
+            print("TRUCADA: "+player.name + " trucou!")
             self.round_truco = True
+            player.can_trucar = False
             return 't'
         elif context[0] == 'r':
             if context[1] == 1:
                 self.round_points_value +=3
-                print(player.name + " aceitou a trucada!")
+                print("TRUCADA: "+player.name + " aceitou a trucada!")
                 self.round_truco = False
                 return 't'
 
             elif context[1] == 2:
-                print(player.name + " recusou a trucada!")
+                print("AMARELOU!! "+player.name + " recusou a trucada!")
                 self.round_truco = False
 
                 self.hand_win_history = []
@@ -135,28 +161,28 @@ class Environment:
             elif context[1] == 3:
                 self.round_points_value +=3
 
-                print(player.name + " aumentou a trucada!")
+                print("ENTÃO VEM MARRECO! "+player.name + " aumentou a trucada!")
                 return 't'
         else:
-            print("{} jogou {} de {}".format(player.name , player.last_card_played[0], player.card_name(player.last_card_played[1])))
+            print("\nJOGADA: {} jogou {} de {}".format(player.name , player.last_card_played[0], player.card_name(player.last_card_played[1])))
             if self.initiator_player.last_card_played == None:
-                return self.define_player_play(self.initiator_player, self.initiator_player.play(self.round_truco, True, self.finisher_player.last_card_played, hand), self.finisher_player)
+                return self.define_player_play(self.initiator_player, self.initiator_player.play(self.round_truco, True, self.finisher_player.last_card_played, hand, self.get_who_made_first_value(self.initiator_player)), self.finisher_player)
    
     def define_hand_winner(self):
         weight_player_initiator = self.initiator_player.last_card_played[2]
         weight_player_finisher = self.finisher_player.last_card_played[2]
         if (weight_player_initiator > weight_player_finisher):
             self.hand_win_history.append(self.initiator_player)
-            print(self.initiator_player.name + " fez a mão!")
+            print("MÃO: "+self.initiator_player.name + " fez a mão!")
 
         elif (weight_player_initiator < weight_player_finisher):
             self.hand_win_history.append(self.finisher_player)
-            print(self.finisher_player.name + " fez a mão!")
+            print("MÃO: "+self.finisher_player.name + " fez a mão!")
             self.set_order_players(self.finisher_player)
         else:
             self.hand_win_history.append(self.finisher_player)
             self.hand_win_history.append(self.initiator_player)
-            print("Empachou")
+            print("VISH: Empachou")
 
         if len(self.hand_win_history) > 1:
             winner = self.verify_round_winner()
@@ -166,7 +192,7 @@ class Environment:
                 return True
             else:
                 if(len(self.initiator_player.cards_in_hand) == 0 and len(self.finisher_player.cards_in_hand) == 0):
-                    print("Ninguém venceu a rodada")
+                    print("DEU NEGA! Ninguém venceu a rodada")
                     return True
         return False
 
@@ -186,6 +212,14 @@ class Environment:
                 self.initiator_player = self.p1
                 self.finisher_player = self.p2
     
+    def get_who_made_first_value(self, player):
+        if len(self.hand_win_history) == 0:
+            return 0
+        elif player == self.hand_win_history[0]:
+            return 1
+        else:
+            return -1
+
     ### Round Over
 
     def give_points_to_winner(self, winner: Player):
@@ -205,10 +239,10 @@ class Environment:
         if counterp1 == counterp2:
             return False
         elif counterp1 == 2:
-            print(self.p1.name + " venceu esse round")
+            print("OLHA O OMI AÍ! "+self.p1.name + " venceu esse round")
             return self.p1
         elif counterp2 == 2:
-            print(self.p2.name + " venceu esse round")
+            print("OLHA O OMI AÍ! "+self.p2.name + " venceu esse round")
             return self.p2
         else:
             return False
