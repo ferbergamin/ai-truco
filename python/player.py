@@ -1,4 +1,3 @@
-from numpy.lib.utils import who
 from neuron import Neuron
 
 class Player:
